@@ -6,7 +6,7 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy import text
 import psycopg2
 
-DATABASE_URL = "postgresql://postgres:3891123@192.168.0.1:5432/my_db"
+DATABASE_URL = "postgresql://postgres:3891123@my_db:5432/my_db"
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -19,11 +19,11 @@ class User(Base):
 Base.metadata.create_all(engine)
 
 class UserCreate(BaseModel):
-    name: str
+    Task: str
 
 class UserResponse(BaseModel):
     id: int
-    name: str
+    Task: str
 
     class Config:
         from_attributes = True
@@ -37,7 +37,7 @@ def get_db():
 
 def create_new_user(db: Session, user_data: UserCreate):
     new_user = User(
-        Task=user_data.name,
+        Task=user_data.Task,
     )
     db.add(new_user)
     db.commit()
@@ -54,7 +54,7 @@ def update_user(db: Session, user_id: int, user_data: UserCreate):
     user = get_user_by_id(db, user_id)
     if not user:
         return None
-    user.Task = user_data.name
+    user.Task = user_data.Task
     db.commit()
     db.refresh(user)
     return user
