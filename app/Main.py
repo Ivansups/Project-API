@@ -1,3 +1,5 @@
+import os
+import sys
 from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, String, Integer
@@ -6,7 +8,11 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy import text
 import psycopg2
 
-DATABASE_URL = "postgresql://postgres:3891123@my_db:5432/my_db"
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(PROJECT_ROOT)
+
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:3891123@db:5432/my_db")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
