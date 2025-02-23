@@ -1,41 +1,41 @@
-import os
-import sys
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PROJECT_ROOT)
-
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from app.Main import app, Base, get_db
-
-os.environ["DATABASE_URL"] = os.getenv("TEST_DATABASE_URL", "postgresql://postgres:3891123@db_test:5432/test_db")
-engine = create_engine(os.getenv("DATABASE_URL"))
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base.metadata.create_all(bind=engine)
-
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
-
-app.dependency_overrides[get_db] = override_get_db
+from app.Main import app
+from app.schemas import TaskCreate
 
 client = TestClient(app)
-@app.get("/")
-def test_root():
-    response = client.get("/")
+
+
+def test_create_task():
+    task_data = TaskCreate(Task="Test Task")
+
+    response = client.post("/tasks/create_task", json=task_data.model_dump())
+
     assert response.status_code == 200
-    assert response.json() == {"Hello": "World"}
-@app.get("/tasks/")
-def test_post():
-    item_data = {
-        "Task": "<SOMETASK>",
-    }
-    response = client.post("/tasks/create_task", json=item_data)
-    assert response.status_code == 200, f"Expected status code 200, but got {response.status_code}"
-    created_item = response.json()
-    assert created_item["Task"] == "<SOMETASK>", "Task in response does not match sent data"
-    print("Test passed successfully!")
+    data = response.json()
+    assert data["Task"] == task_data.Task
+    assert "id" in data and isinstance(data["id"], int)
+
+
+def test_update_task():
+    create_response = client.post("/tasks/create_task", json=TaskCreate(Task="Initial Task").model_dump())
+    assert create_response.status_code == 200
+    task_id = create_response.json()["id"]
+    assert task_id is not None
+
+    update_data = TaskCreate(Task="Updated Task")
+    update_response = client.put(f"/tasks/update_task_by_id/{task_id}", json=update_data.model_dump())
+    assert update_response.status_code == 200
+    updated_data = update_response.json()
+    assert updated_data["Task"] == update_data.Task
+
+
+def test_delete_task():
+    create_response = client.post("/tasks/create_task", json=TaskCreate(Task="Task to Delete").model_dump())
+    assert create_response.status_code == 200
+    task_id = create_response.json()["id"]
+    assert task_id is not None
+
+    delete_response = client.delete(f"/tasks/delete_task_by_id/{task_id}")
+    assert delete_response.status_code == 200
+    deleted_data = delete_response.json()
+    assert deleted_data["id"] == task_id

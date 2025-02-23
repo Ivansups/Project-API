@@ -1,13 +1,13 @@
 #!/bin/bash
-until nc -z -v -w30 db 5432; do
-  echo "Waiting for main database to start..."
+
+set -e
+
+until PGPASSWORD=postgres psql -h "db" -U "postgres" -c '\l'; do
+  >&2 echo "Postgres is unavailable - sleeping"
   sleep 1
 done
 
-until nc -z -v -w30 db_test 5432; do
-  echo "Waiting for test database to start..."
-  sleep 1
-done
+>&2 echo "Postgres is up - continuing"
 
-echo "Databases are ready!"
+# Передаем управление команде, указанной в параметрах
 exec "$@"
