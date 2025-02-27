@@ -30,3 +30,9 @@ def delete_task(db: Session, task_id: int):
     db.delete(task)
     db.commit()
     return task
+
+def delete_all_tasks(db: Session):
+    for task in get_tasks(db):
+        delete_task(db, task.id)
+        db.commit()
+    return {"message": "Все задачи удалены!"}
