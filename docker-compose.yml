@@ -1,8 +1,12 @@
 version: '3.8'
 
+networks:
+  app-network:
+    external: true  # Используем внешнюю сеть
+
 services:
-  app:
-    build: .
+  backend:
+    build: .  # Собираем из текущей директории
     ports:
       - "8000:8000"
     volumes:
@@ -10,6 +14,8 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:3891123@db:5432/my_db
       - PYTHONPATH=/app
+    networks:
+      - app-network
     depends_on:
       - db
     entrypoint: ["/app/wait-for-db.sh"]
@@ -18,13 +24,13 @@ services:
   db:
     image: postgres:13
     environment:
-      POSTGRES_HOST_AUTH_METHOD: trust
       POSTGRES_USER: postgres
-      POSTGRES_DB: db
-    ports:
-      - "5432:5432"
+      POSTGRES_PASSWORD: 3891123
+      POSTGRES_DB: my_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
 volumes:
   postgres_data:

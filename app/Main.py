@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from .db import get_db
 from .crud import (
     create_task,
@@ -12,6 +13,12 @@ from .schemas import TaskCreate, TaskResponse
 
 app = FastAPI(debug=True)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://todo_web:3000", "http://localhost:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 @app.post("/tasks/create_task", response_model=TaskResponse)
 def create_task_route(task_data: TaskCreate, db=Depends(get_db)):
     return create_task(db, task_data)
